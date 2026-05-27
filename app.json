@@ -1,17 +1,20 @@
 {
   "expo": {
-    "name": "booking-mobile",
-    "slug": "booking-mobile",
+    "name": "Booking Borellia",
+    "slug": "booking-borellia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bookingborellia.app"
     },
     "android": {
+      "package": "com.bookingborellia.app",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#111B4E",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -19,6 +22,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "39902c0d-fbd0-49a1-a30a-cee089b4445c"
+      }
+    },
+    "owner": "elifbilge"
   }
 }

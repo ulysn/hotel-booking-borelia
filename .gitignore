@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Backend
+booking-backend/node_modules/
+booking-backend/.env
+booking-backend/dist/
+booking-backend/src/generated/
