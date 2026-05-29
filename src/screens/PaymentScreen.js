@@ -10,8 +10,13 @@ export default function PaymentScreen({ navigation, route }) {
   const { hotel, room } = route.params ?? {};
   const { user } = useAuthStore();
 
-  const [checkIn,  setCheckIn]  = useState('2026-05-10');
-  const [checkOut, setCheckOut] = useState('2026-05-15');
+  const _today    = new Date();
+  const _tomorrow = new Date(_today);
+  _tomorrow.setDate(_today.getDate() + 1);
+  const _fmt = (d) => d.toISOString().split('T')[0];
+
+  const [checkIn,  setCheckIn]  = useState(_fmt(_today));
+  const [checkOut, setCheckOut] = useState(_fmt(_tomorrow));
   const guests = 2;
 
   const nights = Math.max(1, Math.ceil((new Date(checkOut) - new Date(checkIn)) / 86400000));

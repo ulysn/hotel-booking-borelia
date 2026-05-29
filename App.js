@@ -1,47 +1,60 @@
 import './global.css';
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import useAuthStore from './src/store/authStore';
-import LoginScreen      from './src/screens/LoginScreen';
-import SignUpScreen     from './src/screens/SignUpScreen';
-import HomeScreen       from './src/screens/HomeScreen';
+import LoginScreen       from './src/screens/LoginScreen';
+import SignUpScreen      from './src/screens/SignUpScreen';
+import HomeScreen        from './src/screens/HomeScreen';
 import HotelDetailScreen from './src/screens/HotelDetailScreen';
-import PaymentScreen    from './src/screens/PaymentScreen';
+import PaymentScreen     from './src/screens/PaymentScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  const { hydrate, user } = useAuthStore();
+  const { hydrate, user, isHydrating } = useAuthStore();
 
   useEffect(() => {
     hydrate();
   }, []);
 
+  // BUG-004: Hydration tamamlanana kadar siyah/navy ekran göster, Login flash'ı engelle
+  if (isHydrating) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, backgroundColor: '#111B4E' }} />
+      </SafeAreaProvider>
+    );
+  }
+
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {user ? (
-          <>
-            <Stack.Screen name="Home"        component={HomeScreen} />
-            <Stack.Screen name="HotelDetail" component={HotelDetailScreen} />
-            <Stack.Screen name="Payment"     component={PaymentScreen} />
-            <Stack.Screen name="Login"       component={LoginScreen} />
-            <Stack.Screen name="SignUp"      component={SignUpScreen} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="Login"       component={LoginScreen} />
-            <Stack.Screen name="SignUp"      component={SignUpScreen} />
-            <Stack.Screen name="Home"        component={HomeScreen} />
-            <Stack.Screen name="HotelDetail" component={HotelDetailScreen} />
-            <Stack.Screen name="Payment"     component={PaymentScreen} />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <StatusBar style="light" />
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {user ? (
+            <>
+              <Stack.Screen name="Home"        component={HomeScreen} />
+              <Stack.Screen name="HotelDetail" component={HotelDetailScreen} />
+              <Stack.Screen name="Payment"     component={PaymentScreen} />
+              <Stack.Screen name="Login"       component={LoginScreen} />
+              <Stack.Screen name="SignUp"      component={SignUpScreen} />
+            </>
+          ) : (
+            <>
+              <Stack.Screen name="Login"       component={LoginScreen} />
+              <Stack.Screen name="SignUp"      component={SignUpScreen} />
+              <Stack.Screen name="Home"        component={HomeScreen} />
+              <Stack.Screen name="HotelDetail" component={HotelDetailScreen} />
+              <Stack.Screen name="Payment"     component={PaymentScreen} />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity,
   FlatList, ActivityIndicator, Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api/axiosClient';
 import useAuthStore from '../store/authStore';
 
@@ -36,6 +37,7 @@ function HotelCard({ hotel, onPress }) {
 
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuthStore();
+  const insets = useSafeAreaInsets();
   const [hotels, setHotels]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
@@ -55,8 +57,8 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-[#111B4E] pt-14 pb-5 px-5">
+      {/* Header — top padding = gerçek safe area inset */}
+      <View className="bg-[#111B4E] pb-5 px-5" style={{ paddingTop: insets.top + 8 }}>
         <View className="flex-row justify-between items-center mb-4">
           <View>
             <Text className="text-white text-xl font-bold">🪷 Booking Borellia</Text>

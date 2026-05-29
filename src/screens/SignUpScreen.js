@@ -2,7 +2,9 @@ import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, ActivityIndicator, Alert,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../api/axiosClient';
 
 export default function SignUpScreen({ navigation }) {
@@ -35,62 +37,69 @@ export default function SignUpScreen({ navigation }) {
   };
 
   const fields = [
-    { key: 'firstName', placeholder: 'First Name *', type: 'default' },
-    { key: 'lastName',  placeholder: 'Last Name *',  type: 'default' },
-    { key: 'phone',     placeholder: 'Phone Number',  type: 'phone-pad' },
-    { key: 'email',     placeholder: 'Email *',        type: 'email-address' },
-    { key: 'password',  placeholder: 'Password *',     type: 'default', secure: true },
+    { key: 'firstName', placeholder: 'First Name *', type: 'default',        secure: false },
+    { key: 'lastName',  placeholder: 'Last Name *',  type: 'default',        secure: false },
+    { key: 'phone',     placeholder: 'Phone Number',  type: 'phone-pad',     secure: false },
+    { key: 'email',     placeholder: 'Email *',        type: 'email-address', secure: false },
+    { key: 'password',  placeholder: 'Password *',     type: 'default',       secure: true  },
   ];
 
   return (
-    <ScrollView className="flex-1 bg-white" contentContainerStyle={{ flexGrow: 1 }}>
-      <View className="flex-1 px-6 pt-14 pb-8">
+    <SafeAreaView className="flex-1 bg-white">
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
+          <View className="flex-1 px-6 pt-8 pb-8">
 
-        {/* Lotus logo */}
-        <View className="items-center mb-6">
-          <Text className="text-6xl mb-1">🪷</Text>
-          <Text className="font-bold text-2xl text-[#111B4E]">Sign Up</Text>
-          <Text className="text-gray-400 text-sm mt-1">Create your Booking Borellia account</Text>
-        </View>
-
-        {/* Form */}
-        <View className="bg-white rounded-3xl shadow-md p-6 border border-gray-100">
-          {fields.map(({ key, placeholder, type, secure }) => (
-            <View key={key} className="mb-3">
-              <TextInput
-                className="bg-gray-100 rounded-2xl px-4 py-3.5 text-sm text-gray-700"
-                placeholder={placeholder}
-                value={form[key]}
-                onChangeText={set(key)}
-                keyboardType={type}
-                autoCapitalize={type === 'email-address' ? 'none' : 'words'}
-                secureTextEntry={!!secure}
-                placeholderTextColor="#9ca3af"
-              />
-              {errors[key] && (
-                <Text className="text-red-500 text-xs mt-1 ml-2">
-                  {errors[key]?.[0]}
-                </Text>
-              )}
+            {/* Lotus logo */}
+            <View className="items-center mb-6">
+              <Text className="text-6xl mb-1">🪷</Text>
+              <Text className="font-bold text-2xl text-[#111B4E]">Sign Up</Text>
+              <Text className="text-gray-400 text-sm mt-1">Create your Booking Borellia account</Text>
             </View>
-          ))}
 
-          <TouchableOpacity
-            className="bg-[#111B4E] rounded-full py-4 items-center mt-2"
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading
-              ? <ActivityIndicator color="#fff" />
-              : <Text className="text-white font-semibold text-base">Create Account</Text>
-            }
-          </TouchableOpacity>
-        </View>
+            {/* Form */}
+            <View className="bg-white rounded-3xl shadow-md p-6 border border-gray-100">
+              {fields.map(({ key, placeholder, type, secure }) => (
+                <View key={key} className="mb-3">
+                  <TextInput
+                    className="bg-gray-100 rounded-2xl px-4 py-3.5 text-sm text-gray-700"
+                    placeholder={placeholder}
+                    value={form[key]}
+                    onChangeText={set(key)}
+                    keyboardType={type}
+                    autoCapitalize={secure || type === 'email-address' ? 'none' : 'words'}
+                    secureTextEntry={secure}
+                    placeholderTextColor="#9ca3af"
+                  />
+                  {errors[key] && (
+                    <Text className="text-red-500 text-xs mt-1 ml-2">
+                      {errors[key]?.[0]}
+                    </Text>
+                  )}
+                </View>
+              ))}
 
-        <TouchableOpacity className="mt-5 items-center" onPress={() => navigation.navigate('Login')}>
-          <Text className="text-gray-500 text-sm">Already have an account? <Text className="text-[#111B4E] font-semibold">Log in</Text></Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+              <TouchableOpacity
+                className="bg-[#111B4E] rounded-full py-4 items-center mt-2"
+                onPress={handleRegister}
+                disabled={loading}
+              >
+                {loading
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text className="text-white font-semibold text-base">Create Account</Text>
+                }
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity className="mt-5 items-center" onPress={() => navigation.navigate('Login')}>
+              <Text className="text-gray-500 text-sm">Already have an account? <Text className="text-[#111B4E] font-semibold">Log in</Text></Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

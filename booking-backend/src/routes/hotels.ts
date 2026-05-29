@@ -6,7 +6,7 @@ const router = Router();
 // GET /api/hotels
 router.get('/', async (_req: Request, res: Response): Promise<void> => {
   const hotels = await prisma.hotel.findMany({
-    include: { _count: { select: { rooms: true } } },
+    include: { rooms: true, _count: { select: { rooms: true } } },
     orderBy: { id: 'asc' },
   });
   res.json({ hotels });

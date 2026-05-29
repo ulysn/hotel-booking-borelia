@@ -7,13 +7,13 @@ const USER_KEY  = 'bb_user';
 const useAuthStore = create((set) => ({
   token: null,
   user:  null,
+  isHydrating: true,
 
-  // Uygulama açılışında AsyncStorage'dan yükle
   hydrate: async () => {
     const token = await AsyncStorage.getItem(TOKEN_KEY);
     const userRaw = await AsyncStorage.getItem(USER_KEY);
     const user = userRaw ? JSON.parse(userRaw) : null;
-    set({ token, user });
+    set({ token, user, isHydrating: false });
   },
 
   login: async (token, user) => {

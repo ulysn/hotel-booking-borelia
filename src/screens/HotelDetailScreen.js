@@ -143,7 +143,7 @@ export default function HotelDetailScreen({ navigation, route }) {
         </View>
         <TouchableOpacity
           className="bg-[#111B4E] rounded-full px-7 py-3"
-          disabled={selectedRoom && !selectedRoom.isAvailable}
+          disabled={!selectedRoom || !selectedRoom.isAvailable}
           onPress={() => navigation.navigate('Payment', { hotel, room: selectedRoom })}
         >
           <Text className="text-white font-semibold">Book Room</Text>
