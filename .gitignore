@@ -40,7 +40,7 @@ yarn-error.*
 /ios
 /android
 
-# Claude Code
+# local tools
 .claude/
 
 # Backend
