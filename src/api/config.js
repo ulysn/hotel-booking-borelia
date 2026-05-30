@@ -1,2 +1,1 @@
-// Demo için bu dosyadan IP'yi değiştirmek yeterli
-export const API_URL = 'http://10.199.170.19:5000/api';
+export const API_URL = 'https://hotel-booking-borelia-production.up.railway.app/api';
