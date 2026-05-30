@@ -80,11 +80,13 @@ const hotels = [
 ];
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  const existing = await prisma.hotel.count();
+  if (existing > 0) {
+    console.log(`⏭️  Database already has ${existing} hotels. Skipping seed.`);
+    return;
+  }
 
-  await prisma.reservation.deleteMany();
-  await prisma.room.deleteMany();
-  await prisma.hotel.deleteMany();
+  console.log('🌱 Seeding database...');
 
   for (const { rooms, ...hotelData } of hotels) {
     const hotel = await prisma.hotel.create({

@@ -3,7 +3,7 @@ builder = "NIXPACKS"
 buildCommand = "cd booking-backend && npm install && npm run build"
 
 [deploy]
-startCommand = "cd booking-backend && npm run db:deploy && npm start"
+startCommand = "cd booking-backend && npm run db:deploy && npm run db:seed && npm start"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
