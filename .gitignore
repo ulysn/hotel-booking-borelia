@@ -40,6 +40,9 @@ yarn-error.*
 /ios
 /android
 
+# Claude Code
+.claude/
+
 # Backend
 booking-backend/node_modules/
 booking-backend/.env
