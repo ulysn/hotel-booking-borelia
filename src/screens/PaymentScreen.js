@@ -1,26 +1,29 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, ScrollView,
-  TouchableOpacity, ActivityIndicator, Alert,
+  TouchableOpacity, ActivityIndicator, Alert, Platform,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../api/axiosClient';
 import useAuthStore from '../store/authStore';
+
+const fmt = (d) => d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const toISO = (d) => d.toISOString();
 
 export default function PaymentScreen({ navigation, route }) {
   const { hotel, room } = route.params ?? {};
   const { user } = useAuthStore();
 
-  const _today    = new Date();
-  const _tomorrow = new Date(_today);
-  _tomorrow.setDate(_today.getDate() + 1);
-  const _fmt = (d) => d.toISOString().split('T')[0];
+  const today    = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
 
-  const [checkIn,  setCheckIn]  = useState(_fmt(_today));
-  const [checkOut, setCheckOut] = useState(_fmt(_tomorrow));
-  const guests = 2;
+  const [checkIn,  setCheckIn]  = useState(today);
+  const [checkOut, setCheckOut] = useState(tomorrow);
+  const [showPickerFor, setShowPickerFor] = useState(null); // 'in' | 'out' | null
 
-  const nights = Math.max(1, Math.ceil((new Date(checkOut) - new Date(checkIn)) / 86400000));
-  const pricePerNight = room?.pricePerNight ?? 450;
+  const nights     = Math.max(1, Math.ceil((checkOut - checkIn) / 86400000));
+  const pricePerNight = room?.pricePerNight ?? 0;
   const totalPrice    = nights * pricePerNight;
 
   const [contact, setContact] = useState({
@@ -28,7 +31,7 @@ export default function PaymentScreen({ navigation, route }) {
     email: user?.email || '', phone: '',
   });
   const [payment, setPayment] = useState({ cardName: '', cardNumber: '', expiry: '', cvv: '' });
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading]     = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [reservation, setReservation] = useState(null);
   const [apiError, setApiError] = useState('');
@@ -42,6 +45,25 @@ export default function PaymentScreen({ navigation, route }) {
     return c.length >= 3 ? `${c.slice(0, 2)}/${c.slice(2)}` : c;
   };
 
+  const handleDateChange = (event, selectedDate) => {
+    setShowPickerFor(null);
+    if (!selectedDate) return;
+    if (showPickerFor === 'in') {
+      setCheckIn(selectedDate);
+      if (selectedDate >= checkOut) {
+        const next = new Date(selectedDate);
+        next.setDate(selectedDate.getDate() + 1);
+        setCheckOut(next);
+      }
+    } else {
+      if (selectedDate <= checkIn) {
+        Alert.alert('Geçersiz Tarih', 'Çıkış tarihi giriş tarihinden sonra olmalıdır.');
+        return;
+      }
+      setCheckOut(selectedDate);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user) { Alert.alert('Giriş Gerekli', 'Rezervasyon için giriş yapmalısınız.'); return; }
     if (!room)  { setApiError('Oda seçilmedi.'); return; }
@@ -49,8 +71,8 @@ export default function PaymentScreen({ navigation, route }) {
     try {
       const { data } = await api.post('/reservations', {
         roomId: room.id,
-        checkInDate:  new Date(checkIn).toISOString(),
-        checkOutDate: new Date(checkOut).toISOString(),
+        checkInDate:  toISO(checkIn),
+        checkOutDate: toISO(checkOut),
       });
       setReservation(data.reservation);
       setConfirmed(true);
@@ -64,19 +86,25 @@ export default function PaymentScreen({ navigation, route }) {
   if (confirmed) return (
     <View className="flex-1 bg-white items-center justify-center px-8">
       <Text className="text-5xl mb-4">✅</Text>
-      <Text className="font-bold text-2xl text-[#111B4E] mb-2">Reservation Confirmed!</Text>
+      <Text className="font-bold text-2xl text-[#111B4E] mb-2">Rezervasyon Onaylandı!</Text>
       <Text className="text-gray-500 text-center mb-1">
-        Your stay at <Text className="font-semibold">{reservation?.room?.hotel?.name || hotel?.name}</Text> is booked.
+        <Text className="font-semibold">{reservation?.room?.hotel?.name || hotel?.name}</Text> otelinizde yeriniz hazır.
       </Text>
-      <Text className="text-gray-400 text-sm mb-4">{checkIn} — {checkOut} · {guests} Guests</Text>
+      <Text className="text-gray-400 text-sm mb-4">
+        {fmt(checkIn)} — {fmt(checkOut)} · {nights} gece
+      </Text>
       <Text className="text-3xl font-bold text-[#111B4E] mb-6">
-        ${reservation?.totalPrice ?? totalPrice} <Text className="text-gray-400 text-base font-normal">total</Text>
+        ${reservation?.totalPrice ?? totalPrice}
+        <Text className="text-gray-400 text-base font-normal"> toplam</Text>
       </Text>
       <TouchableOpacity
-        className="bg-[#111B4E] rounded-full px-8 py-3"
-        onPress={() => navigation.navigate('Home')}
+        className="bg-[#111B4E] rounded-full px-8 py-3 mb-3"
+        onPress={() => navigation.navigate('Reservations')}
       >
-        <Text className="text-white font-semibold">Back to Home</Text>
+        <Text className="text-white font-semibold">Rezervasyonlarımı Gör</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+        <Text className="text-gray-400 text-sm mt-1">Ana Sayfaya Dön</Text>
       </TouchableOpacity>
     </View>
   );
@@ -97,23 +125,55 @@ export default function PaymentScreen({ navigation, route }) {
             <Text>🌿</Text>
             <Text className="text-2xl">🪷</Text>
             <Text>🌿</Text>
-            <Text className="font-bold text-[#111B4E] text-xs leading-tight">Reservation{'\n'}Confirmation</Text>
+            <Text className="font-bold text-[#111B4E] text-xs leading-tight">Rezervasyon{'\n'}Onayı</Text>
           </View>
         </View>
 
-        <View className="px-4 py-5 space-y-5">
+        <View className="px-4 py-5 gap-4">
 
-          {/* Rezervasyon özeti */}
+          {/* Otel özeti */}
           <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <Text className="font-bold text-[#111B4E] text-sm mb-1" numberOfLines={2}>
               {hotel?.name || 'Otel Adı'}
             </Text>
-            <Text className="text-gray-500 text-xs mb-1">📍 {hotel?.location}</Text>
-            <Text className="text-gray-600 text-xs">
-              {checkIn} — {checkOut} · {nights} night · {guests} Guests
-            </Text>
-            <Text className="font-bold text-[#111B4E] text-sm mt-1">${totalPrice} total</Text>
+            <Text className="text-gray-500 text-xs mb-2">📍 {hotel?.location}</Text>
+            {room && (
+              <Text className="text-gray-600 text-xs mb-3">🛏 {room.type} · ${room.pricePerNight}/gece</Text>
+            )}
+
+            {/* Tarih seçici */}
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3"
+                onPress={() => setShowPickerFor('in')}
+              >
+                <Text className="text-gray-400 text-xs mb-1">Giriş Tarihi</Text>
+                <Text className="text-[#111B4E] font-semibold text-sm">📅 {fmt(checkIn)}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3"
+                onPress={() => setShowPickerFor('out')}
+              >
+                <Text className="text-gray-400 text-xs mb-1">Çıkış Tarihi</Text>
+                <Text className="text-[#111B4E] font-semibold text-sm">📅 {fmt(checkOut)}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-100">
+              <Text className="text-gray-500 text-xs">{nights} gece</Text>
+              <Text className="font-bold text-[#111B4E] text-base">${totalPrice} toplam</Text>
+            </View>
           </View>
+
+          {showPickerFor && (
+            <DateTimePicker
+              value={showPickerFor === 'in' ? checkIn : checkOut}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              minimumDate={showPickerFor === 'in' ? new Date() : new Date(checkIn.getTime() + 86400000)}
+              onChange={handleDateChange}
+            />
+          )}
 
           {apiError ? (
             <View className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
@@ -127,20 +187,19 @@ export default function PaymentScreen({ navigation, route }) {
                 Rezervasyon için{' '}
                 <Text className="font-semibold underline" onPress={() => navigation.navigate('Login')}>
                   giriş yapın
-                </Text>
-                .
+                </Text>.
               </Text>
             </View>
           )}
 
           {/* İletişim bilgileri */}
           <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <Text className="font-semibold text-[#111B4E] text-sm mb-3">Who will handle the login process?</Text>
+            <Text className="font-semibold text-[#111B4E] text-sm mb-3">İletişim Bilgileri</Text>
             {[
-              { key: 'name',    label: 'Name *',         type: 'default' },
-              { key: 'surname', label: 'Surname *',      type: 'default' },
-              { key: 'email',   label: 'Email *',        type: 'email-address' },
-              { key: 'phone',   label: 'Phone Number *', type: 'phone-pad' },
+              { key: 'name',    label: 'Ad *',           type: 'default' },
+              { key: 'surname', label: 'Soyad *',        type: 'default' },
+              { key: 'email',   label: 'E-posta *',      type: 'email-address' },
+              { key: 'phone',   label: 'Telefon *',      type: 'phone-pad' },
             ].map(({ key, label, type }) => (
               <TextInput key={key}
                 className="bg-gray-100 rounded-2xl px-4 py-3 mb-2 text-sm text-gray-700"
@@ -156,10 +215,9 @@ export default function PaymentScreen({ navigation, route }) {
 
           {/* Ödeme bilgileri */}
           <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <Text className="font-semibold text-[#111B4E] text-sm mb-1">Payment Information</Text>
-            <Text className="text-xs text-gray-400 mb-3">💳 Secure transactions. Your info is protected.</Text>
+            <Text className="font-semibold text-[#111B4E] text-sm mb-1">Ödeme Bilgileri</Text>
+            <Text className="text-xs text-gray-400 mb-3">💳 Güvenli işlem. Bilgileriniz korunmaktadır.</Text>
 
-            {/* Kart logoları */}
             <View className="flex-row gap-2 mb-4">
               <View className="flex-row">
                 <View className="w-5 h-5 bg-red-500 rounded-full opacity-90" />
@@ -175,7 +233,7 @@ export default function PaymentScreen({ navigation, route }) {
 
             <TextInput
               className="bg-gray-100 rounded-2xl px-4 py-3 mb-2 text-sm text-gray-700"
-              placeholder="Cardholder Name *"
+              placeholder="Kart Sahibi *"
               value={payment.cardName}
               onChangeText={setP('cardName')}
               placeholderTextColor="#9ca3af"
@@ -192,7 +250,7 @@ export default function PaymentScreen({ navigation, route }) {
             <View className="flex-row gap-2">
               <TextInput
                 className="flex-1 bg-gray-100 rounded-2xl px-4 py-3 text-sm text-gray-700 font-mono"
-                placeholder="MM/YY"
+                placeholder="AA/YY"
                 value={payment.expiry}
                 onChangeText={(v) => setPayment({ ...payment, expiry: formatExpiry(v) })}
                 keyboardType="numeric"
@@ -216,9 +274,12 @@ export default function PaymentScreen({ navigation, route }) {
 
       {/* Sticky bar */}
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-5 py-4 flex-row justify-between items-center">
-        <Text className="font-bold text-[#111B4E] text-xl">
-          ${totalPrice}<Text className="text-gray-400 font-normal text-base">/total</Text>
-        </Text>
+        <View>
+          <Text className="text-xs text-gray-400">{nights} gece · {room?.type}</Text>
+          <Text className="font-bold text-[#111B4E] text-xl">
+            ${totalPrice}<Text className="text-gray-400 font-normal text-base"> toplam</Text>
+          </Text>
+        </View>
         <TouchableOpacity
           className="bg-[#111B4E] rounded-full px-6 py-3"
           onPress={handleSubmit}
@@ -226,7 +287,7 @@ export default function PaymentScreen({ navigation, route }) {
         >
           {loading
             ? <ActivityIndicator color="#fff" />
-            : <Text className="text-white font-semibold text-sm">Confirm Reservation</Text>
+            : <Text className="text-white font-semibold text-sm">Rezervasyonu Onayla</Text>
           }
         </TouchableOpacity>
       </View>
